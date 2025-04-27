@@ -1,0 +1,11 @@
+## Interface: 11200
+## Title: EzTrack
+## Notes: Tracks class abilities, buffs, and procs
+## Author: zhudev
+## Version: 1.0
+## SavedVariables: EzTrackDB
+## OptionalDeps: 
+
+EzTrack.lua
+EzTrack_Options.lua
+EzTrack_Classes.lua
