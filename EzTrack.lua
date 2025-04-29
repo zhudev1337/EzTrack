@@ -405,6 +405,22 @@ local classAbilities = {
             isProc = false,
             hasDuration = true,
             race = "Troll"
+        },
+        {
+            name = "Mind Quickening",
+            texture = "Interface\\Icons\\Spell_Nature_WispHeal",
+            icon = "Interface\\Icons\\Spell_Nature_WispHeal",
+            isProc = false,
+            hasDuration = true,
+            isItemBased = true
+        },
+        {
+            name = "The Restrained Essence of Sapphiron",
+            texture = "Interface\\Icons\\INV_Trinket_Naxxramas06",
+            icon = "Interface\\Icons\\INV_Trinket_Naxxramas06",
+            isProc = false,
+            hasDuration = true,
+            isItemBased = true
         }
     },
     ROGUE = {
@@ -512,7 +528,7 @@ local function ResizeEzTrackFrame()
     -- Reposition icons
     local iconIndex = 1
     for i, ability in ipairs(abilities) do
-        if ability.isProc or ability.isActionBased or availableSpells[ability.name] then
+        if ability.isProc or ability.isActionBased or ability.isItemBased or availableSpells[ability.name] then
             local row = math.floor((iconIndex - 1) / iconsPerRow)
             local col = math.mod(iconIndex - 1, iconsPerRow)
 
@@ -939,7 +955,7 @@ function EzTrack:UpdateAuras()
         -- Only process non-proc abilities
         if not ability.isProc then
             -- For non-proc, non-action-based abilities, check if they exist in spellbook
-            if not ability.isActionBased and not availableSpells[ability.name] then
+            if not ability.isActionBased and not availableSpells[ability.name] and not ability.isItemBased then
                 icon:Hide()
                 icon.glow:SetAlpha(0)
                 icon.activeTimer:SetText("")
