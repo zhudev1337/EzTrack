@@ -403,6 +403,30 @@ local classAbilities = {
             icon = "Interface\\Icons\\Spell_Shadow_Teleport",
             isProc = true,
             hasDuration = true
+        },
+        {
+            name = "Berserking",
+            texture = "Interface\\Icons\\Racial_Troll_Berserk",
+            icon = "Interface\\Icons\\Racial_Troll_Berserk",
+            isProc = false,
+            hasDuration = true,
+            race = "Troll"
+        },
+        {
+            name = "Mind Quickening",
+            texture = "Interface\\Icons\\Spell_Nature_WispHeal",
+            icon = "Interface\\Icons\\Spell_Nature_WispHeal",
+            isProc = false,
+            hasDuration = true,
+            isItemBased = true
+        },
+        {
+            name = "The Restrained Essence of Sapphiron",
+            texture = "Interface\\Icons\\INV_Trinket_Naxxramas06",
+            icon = "Interface\\Icons\\INV_Trinket_Naxxramas06",
+            isProc = false,
+            hasDuration = true,
+            isItemBased = true
         }
     },
     ROGUE = {
