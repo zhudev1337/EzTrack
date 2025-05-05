@@ -87,6 +87,9 @@ local function UpdateBuffTimer(buffName, remaining)
     for _, icon in ipairs(EzTrack.icons) do
         if icon.ability.name == buffName then
             icon.activeTimer:SetText(FormatTimeText(remaining))
+            icon.cooldownTimer:Hide()
+            icon.cooldown.texture:Hide()
+            icon.activeTimer:Show()
             break
         end
     end
@@ -106,6 +109,9 @@ local function HandleBuffExpiration(buffName)
     for _, icon in ipairs(EzTrack.icons) do
         if icon.ability.name == buffName then
             icon.activeTimer:SetText("")
+            icon.activeTimer:Hide()
+            icon.cooldownTimer:Show()
+            icon.cooldown.texture:Show()
             icon:Hide()
             icon.glow:SetAlpha(0)
             break
@@ -397,30 +403,6 @@ local classAbilities = {
             icon = "Interface\\Icons\\Spell_Shadow_Teleport",
             isProc = true,
             hasDuration = true
-        },
-        {
-            name = "Berserking",
-            texture = "Interface\\Icons\\Racial_Troll_Berserk",
-            icon = "Interface\\Icons\\Racial_Troll_Berserk",
-            isProc = false,
-            hasDuration = true,
-            race = "Troll"
-        },
-        {
-            name = "Mind Quickening",
-            texture = "Interface\\Icons\\Spell_Nature_WispHeal",
-            icon = "Interface\\Icons\\Spell_Nature_WispHeal",
-            isProc = false,
-            hasDuration = true,
-            isItemBased = true
-        },
-        {
-            name = "The Restrained Essence of Sapphiron",
-            texture = "Interface\\Icons\\INV_Trinket_Naxxramas06",
-            icon = "Interface\\Icons\\INV_Trinket_Naxxramas06",
-            isProc = false,
-            hasDuration = true,
-            isItemBased = true
         }
     },
     ROGUE = {
@@ -528,7 +510,7 @@ local function ResizeEzTrackFrame()
     -- Reposition icons
     local iconIndex = 1
     for i, ability in ipairs(abilities) do
-        if ability.isProc or ability.isActionBased or ability.isItemBased or availableSpells[ability.name] then
+        if ability.isProc or ability.isActionBased or availableSpells[ability.name] then
             local row = math.floor((iconIndex - 1) / iconsPerRow)
             local col = math.mod(iconIndex - 1, iconsPerRow)
 
@@ -866,10 +848,15 @@ function EzTrack:CreateAbilityIcon(ability, index)
     glow:SetBlendMode("ADD")
     glow:SetAlpha(0)
     glow:SetPoint("CENTER", icon, "CENTER", 0, 0)
-    glow:SetWidth(50)
-    glow:SetHeight(50)
+    glow:SetWidth(54)
+    glow:SetHeight(54)
     glow:SetVertexColor(0.5, 0.8, 1.0)
     glow:SetTexCoord(0, 1, 0, 1) -- Ensure full texture is shown
+
+    -- Create active timer frame
+    local activeTimerFrame = CreateFrame("Frame", nil, icon)
+    activeTimerFrame:SetAllPoints()
+    activeTimerFrame:SetFrameLevel(icon:GetFrameLevel() + 1)
 
     -- Create cooldown timer text
     local cooldownTimer = icon:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -877,15 +864,17 @@ function EzTrack:CreateAbilityIcon(ability, index)
     cooldownTimer:SetText("")
 
     -- Create active timer text
-    local activeTimer = icon:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    activeTimer:SetPoint("TOP", icon, "TOP", 0, 2)
+    local activeTimer = icon:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    activeTimer:SetPoint("BOTTOM", icon, "BOTTOM", 0, 12)
     activeTimer:SetText("")
+    activeTimer:SetTextColor(1, 0.84, 0) -- Gold color for active timers
 
     icon.texture = texture
     icon.cooldown = cooldown
     icon.glow = glow
     icon.cooldownTimer = cooldownTimer
     icon.activeTimer = activeTimer
+    icon.activeTimerFrame = activeTimerFrame
     icon.ability = ability
 
     cooldown.texture = cooldownTexture
@@ -955,7 +944,7 @@ function EzTrack:UpdateAuras()
         -- Only process non-proc abilities
         if not ability.isProc then
             -- For non-proc, non-action-based abilities, check if they exist in spellbook
-            if not ability.isActionBased and not availableSpells[ability.name] and not ability.isItemBased then
+            if not ability.isActionBased and not availableSpells[ability.name] then
                 icon:Hide()
                 icon.glow:SetAlpha(0)
                 icon.activeTimer:SetText("")
@@ -1052,13 +1041,15 @@ function EzTrack:UpdateCooldowns()
                     if duration > 0 then
                         local remaining = duration - (GetTime() - start)
                         if remaining > 0 then
-                            icon.cooldown.texture:Show()
-                            icon.cooldown.text:Show()
-                            icon.cooldown.text:SetText(format("%.1f", remaining))
+                            if not icon.activeTimer:IsShown() then
+                                icon.cooldown.texture:Show()
+                                icon.cooldown.text:Show()
+                                icon.cooldown.text:SetText(FormatTimeText(remaining))
 
-                            -- Update cooldown texture
-                            local progress = remaining / duration
-                            icon.cooldown.texture:SetTexCoord(0, 1, 0, progress)
+                                -- Update cooldown texture
+                                local progress = remaining / duration
+                                icon.cooldown.texture:SetTexCoord(0, 1, 0, progress)
+                            end
                         else
                             icon.cooldown.texture:Hide()
                             icon.cooldown.text:Hide()
