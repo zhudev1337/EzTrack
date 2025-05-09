@@ -223,7 +223,7 @@ function auraFrame:CheckProcs()
                         if buffTexture == ability.texture or altMatches then
                             found = true
                             currentBuffIndex = buffIndex
-                            
+
                             if ability.hasDuration then
                                 local duration = GetPlayerBuffTimeLeft(buffIndex)
                                 if duration and duration > 0 then
@@ -257,7 +257,7 @@ function auraFrame:CheckProcs()
                             if buffTexture == ability.texture or altMatches then
                                 found = true
                                 currentBuffIndex = buffIndex
-                                
+
                                 if ability.hasDuration then
                                     local duration = GetPlayerBuffTimeLeft(buffIndex)
                                     if duration and duration > 0 then
@@ -289,7 +289,7 @@ function auraFrame:CheckProcs()
             end
         end
     end
-    
+
     -- Update active timers after processing all procs
     EzTrack:UpdateActiveTimers()
 end
@@ -319,7 +319,7 @@ function actionFrame:CheckActionProcs()
             end
         end
     end
-    
+
     -- Update active timers after processing all action-based procs
     EzTrack:UpdateActiveTimers()
 end
@@ -502,6 +502,30 @@ local classAbilities = {
             icon = "Interface\\Icons\\Ability_Warrior_DecisiveStrike",
             isProc = true,
             hasDuration = false
+        }
+    },
+    PALADIN = {
+        {
+            name = "Crusader Strike",
+            texture = "Interface\\Icons\\Spell_Holy_CrusaderStrike",
+            icon = "Interface\\Icons\\Spell_Holy_CrusaderStrike",
+            isProc = false,
+            hasDuration = false
+        },
+        {
+            name = "Wrath of Cenarius",
+            texture = "Interface\\Icons\\INV_Jewelry_Ring_40",
+            icon = "Interface\\Icons\\INV_Jewelry_Ring_40",
+            isProc = true,
+            hasDuration = true,
+            isItemBased = true
+        },
+        {
+            name = "Holy Shield",
+            texture = "Interface\\Icons\\Spell_Holy_BlessingOfProtection",
+            icon = "Interface\\Icons\\Spell_Holy_BlessingOfProtection",
+            isProc = false,
+            hasDuration = true
         }
     }
 }
@@ -1070,7 +1094,7 @@ function EzTrack:UpdateAuras()
                         if buffTexture == ability.texture or altMatches then
                             found = true
                             currentBuffIndex = buffIndex
-                            
+
                             if ability.hasDuration then
                                 local duration = GetPlayerBuffTimeLeft(buffIndex)
                                 if duration and duration > 0 then
@@ -1103,7 +1127,7 @@ function EzTrack:UpdateAuras()
                             if buffTexture == ability.texture or altMatches then
                                 found = true
                                 currentBuffIndex = buffIndex
-                                
+
                                 if ability.hasDuration then
                                     local duration = GetPlayerBuffTimeLeft(buffIndex)
                                     if duration and duration > 0 then
@@ -1134,7 +1158,7 @@ function EzTrack:UpdateAuras()
             end
         end
     end
-    
+
     -- Update active timers after processing all icons
     self:UpdateActiveTimers()
 end
