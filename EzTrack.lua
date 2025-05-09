@@ -514,7 +514,7 @@ local classAbilities = {
             stacks = true
         },
         {
-            name = "Wrath of Cenarius",
+            name = "Spell Blessing",
             texture = "Interface\\Icons\\INV_Jewelry_Ring_40",
             icon = "Interface\\Icons\\INV_Jewelry_Ring_40",
             isProc = true,
@@ -1069,7 +1069,7 @@ function EzTrack:UpdateActiveTimers()
                     icon.cooldown.texture:Hide()
                     icon.activeTimer:SetText("")
                     icon.activeTimer:Hide()
-                    
+
                     -- Update stack counter
                     self:UpdateStackCounter(icon, ability, buffData.index)
                 end
