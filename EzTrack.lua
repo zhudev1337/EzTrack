@@ -514,7 +514,7 @@ local classAbilities = {
             stacks = true
         },
         {
-            name = "Spell Blessing",
+            name = "Spell Blasting",
             texture = "Interface\\Icons\\INV_Jewelry_Ring_40",
             icon = "Interface\\Icons\\INV_Jewelry_Ring_40",
             isProc = true,
