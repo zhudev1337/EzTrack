@@ -1,4 +1,4 @@
--- EzTrack - A mage-specific addon for tracking procs and cooldowns
+-- EzTrack - An addon for tracking procs and cooldowns
 
 -- Create initialization frame first
 local initFrame = CreateFrame("Frame", "EzTrackInitFrame", UIParent)
@@ -40,6 +40,13 @@ EzTrackFrame = EzTrack
 -- Register only PLAYER_LOGIN initially
 EzTrack:RegisterEvent("PLAYER_LOGIN")
 
+-- Add debug function near the top with other utility functions
+local function DebugLog(message)
+    if message then
+        DEFAULT_CHAT_FRAME:AddMessage("|cFF00FF00[EzTrack Debug]|r " .. message, 1.0, 1.0, 1.0)
+    end
+end
+
 -- Function to get spell ID by name
 local function GetSpellIDByName(spellName)
     local spellID = 0
@@ -49,9 +56,6 @@ local function GetSpellIDByName(spellName)
             spellID = i
             break
         end
-    end
-    if spellID == 0 then
-        DEFAULT_CHAT_FRAME:AddMessage("EzTrack: Could not find spell ID for " .. spellName, 1.0, 0.0, 0.0)
     end
     return spellID
 end
@@ -84,6 +88,7 @@ local function UpdateBuffTimer(buffName, remaining)
     if not buffData then
         return
     end
+
     for _, icon in ipairs(EzTrack.icons) do
         if icon.ability.name == buffName then
             icon.activeTimer:SetText(FormatTimeText(remaining))
@@ -110,9 +115,7 @@ local function HandleBuffExpiration(buffName)
         if icon.ability.name == buffName then
             icon.activeTimer:SetText("")
             icon.activeTimer:Hide()
-            icon.cooldownTimer:Show()
-            icon.cooldown.texture:Show()
-            icon:Hide()
+            EzTrack:UpdateCooldowns()
             icon.glow:SetAlpha(0)
             break
         end
@@ -178,7 +181,23 @@ function auraFrame:CheckProcs()
                 if buffIndex >= 0 then
                     local buffTexture = GetPlayerBuffTexture(buffIndex)
                     if buffTexture == ability.texture then
-                        found = true
+                        if ability.hasDuration then
+                            -- For procs with duration, check if duration is still valid
+                            local duration = GetPlayerBuffTimeLeft(buffIndex)
+                            if duration and duration > 0 then
+                                found = true
+                                -- Update buff tracking with current duration
+                                UpdateBuffEntry(ability, buffIndex, duration)
+                            else
+                                -- Buff exists but has expired, handle expiration
+                                HandleBuffExpiration(ability.name)
+                            end
+                        else
+                            -- For procs without duration, just check if buff exists
+                            found = true
+                            -- Update buff tracking without duration
+                            UpdateBuffEntry(ability, buffIndex, 0)
+                        end
                     end
                 end
             end
@@ -204,11 +223,14 @@ function auraFrame:CheckProcs()
                         if buffTexture == ability.texture or altMatches then
                             found = true
                             currentBuffIndex = buffIndex
-                            local duration = GetPlayerBuffTimeLeft(buffIndex)
-
-                            -- Update buff tracking
-                            if duration and duration > 0 then
-                                UpdateBuffEntry(ability, buffIndex, duration)
+                            
+                            if ability.hasDuration then
+                                local duration = GetPlayerBuffTimeLeft(buffIndex)
+                                if duration and duration > 0 then
+                                    UpdateBuffEntry(ability, buffIndex, duration)
+                                end
+                            else
+                                UpdateBuffEntry(ability, buffIndex, 0)
                             end
                             break
                         end
@@ -235,11 +257,14 @@ function auraFrame:CheckProcs()
                             if buffTexture == ability.texture or altMatches then
                                 found = true
                                 currentBuffIndex = buffIndex
-                                local duration = GetPlayerBuffTimeLeft(buffIndex)
-
-                                -- Update buff tracking
-                                if duration and duration > 0 then
-                                    UpdateBuffEntry(ability, buffIndex, duration)
+                                
+                                if ability.hasDuration then
+                                    local duration = GetPlayerBuffTimeLeft(buffIndex)
+                                    if duration and duration > 0 then
+                                        UpdateBuffEntry(ability, buffIndex, duration)
+                                    end
+                                else
+                                    UpdateBuffEntry(ability, buffIndex, 0)
                                 end
                                 break
                             end
@@ -264,6 +289,9 @@ function auraFrame:CheckProcs()
             end
         end
     end
+    
+    -- Update active timers after processing all procs
+    EzTrack:UpdateActiveTimers()
 end
 
 -- Check action-based procs
@@ -291,6 +319,9 @@ function actionFrame:CheckActionProcs()
             end
         end
     end
+    
+    -- Update active timers after processing all action-based procs
+    EzTrack:UpdateActiveTimers()
 end
 
 -- Define abilities to track by class
@@ -858,13 +889,7 @@ function EzTrack:CreateAbilityIcon(ability, index)
     local cooldownTexture = cooldown:CreateTexture(nil, "OVERLAY")
     cooldownTexture:SetAllPoints()
     cooldownTexture:SetTexture("Interface\\Cooldown\\UI-Cooldown-Indicator")
-    cooldownTexture:SetTexCoord(0, 1, 0, 1)
     cooldownTexture:Hide()
-
-    -- Create cooldown text
-    local cooldownText = cooldown:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
-    cooldownText:SetPoint("CENTER", cooldown, "CENTER", 0, 0)
-    cooldownText:Hide()
 
     -- Create glow frame
     local glow = icon:CreateTexture(nil, "OVERLAY")
@@ -883,13 +908,13 @@ function EzTrack:CreateAbilityIcon(ability, index)
     activeTimerFrame:SetFrameLevel(icon:GetFrameLevel() + 1)
 
     -- Create cooldown timer text
-    local cooldownTimer = icon:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    cooldownTimer:SetPoint("BOTTOM", icon, "BOTTOM", 0, -2)
+    local cooldownTimer = icon:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+    cooldownTimer:SetPoint("BOTTOM", icon, "BOTTOM", 0, 10)
     cooldownTimer:SetText("")
 
     -- Create active timer text
-    local activeTimer = icon:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    activeTimer:SetPoint("BOTTOM", icon, "BOTTOM", 0, 12)
+    local activeTimer = icon:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+    activeTimer:SetPoint("BOTTOM", icon, "BOTTOM", 0, 10)
     activeTimer:SetText("")
     activeTimer:SetTextColor(1, 0.84, 0) -- Gold color for active timers
 
@@ -902,7 +927,6 @@ function EzTrack:CreateAbilityIcon(ability, index)
     icon.ability = ability
 
     cooldown.texture = cooldownTexture
-    cooldown.text = cooldownText
 
     return icon
 end
@@ -953,7 +977,36 @@ function EzTrack:SetupUI()
     self:SetHeight(totalHeight)
 end
 
--- Update auras
+-- Update active timers
+function EzTrack:UpdateActiveTimers()
+    for _, icon in ipairs(self.icons) do
+        local ability = icon.ability
+        -- Show active timer for abilities with duration (both procs and non-procs)
+        if ability.hasDuration then
+            -- Check if we have an active buff for this ability
+            if activeBuffs[ability.name] then
+                local remaining = activeBuffs[ability.name].expirationTime - GetTime()
+                if remaining > 0 then
+                    icon.cooldownTimer:Hide()
+                    icon.cooldown.texture:Hide()
+                    icon.activeTimer:SetText(FormatTimeText(remaining))
+                    icon.activeTimer:Show()
+                else
+                    icon.activeTimer:SetText("")
+                    icon.activeTimer:Hide()
+                end
+            else
+                icon.activeTimer:SetText("")
+                icon.activeTimer:Hide()
+            end
+        else
+            -- For abilities without duration, ensure active timer is hidden
+            icon.activeTimer:SetText("")
+            icon.activeTimer:Hide()
+        end
+    end
+end
+
 function EzTrack:UpdateAuras()
     if isTestMode then
         return
@@ -965,37 +1018,77 @@ function EzTrack:UpdateAuras()
         local currentBuffIndex = -1
         local shouldContinue = false
 
-        -- Only process non-proc abilities
-        if not ability.isProc then
-            -- For non-proc, non-action-based abilities, check if they exist in spellbook
-            if not ability.isActionBased and not availableSpells[ability.name] then
-                icon:Hide()
-                icon.glow:SetAlpha(0)
-                icon.activeTimer:SetText("")
-                icon.texture:SetVertexColor(1, 1, 1)
-                shouldContinue = true
+        -- For non-proc, non-action-based abilities, check if they exist in spellbook
+        if not ability.isProc and not ability.isActionBased and not availableSpells[ability.name] then
+            shouldContinue = true
+        end
+
+        if not shouldContinue then
+            -- First check if we already have this buff tracked
+            if activeBuffs[ability.name] then
+                currentBuffIndex = activeBuffs[ability.name].index
+                local buffIndex = GetPlayerBuff(currentBuffIndex, "HELPFUL")
+                if buffIndex < 0 then
+                    buffIndex = GetPlayerBuff(currentBuffIndex, "HARMFUL")
+                end
+                if buffIndex >= 0 then
+                    local buffTexture = GetPlayerBuffTexture(buffIndex)
+                    if buffTexture == ability.texture then
+                        if ability.hasDuration then
+                            local duration = GetPlayerBuffTimeLeft(buffIndex)
+                            if duration and duration > 0 then
+                                found = true
+                                UpdateBuffEntry(ability, buffIndex, duration)
+                            else
+                                HandleBuffExpiration(ability.name)
+                            end
+                        else
+                            found = true
+                            UpdateBuffEntry(ability, buffIndex, 0)
+                        end
+                    end
+                end
             end
 
-            if not shouldContinue then
-                -- First check if we already have this buff tracked
-                if activeBuffs[ability.name] then
-                    currentBuffIndex = activeBuffs[ability.name].index
-                    -- Verify the buff is still active
-                    local buffTexture = GetPlayerBuffTexture(currentBuffIndex)
-                    if buffTexture == ability.texture then
-                        found = true
-                        local duration = GetPlayerBuffTimeLeft(currentBuffIndex)
-                        if duration and duration > 0 then
-                            UpdateBuffEntry(ability, currentBuffIndex, duration)
+            -- If not found in active buffs, check all buffs
+            if not found then
+                for i = 0, 31 do
+                    local buffIndex = GetPlayerBuff(i, "HELPFUL")
+                    if buffIndex >= 0 then
+                        local buffTexture = GetPlayerBuffTexture(buffIndex)
+                        local altMatches = false
+
+                        if ability.alternateTextures then
+                            for _, altTexture in ipairs(ability.alternateTextures) do
+                                if buffTexture == altTexture then
+                                    altMatches = true
+                                    break
+                                end
+                            end
+                        end
+
+                        if buffTexture == ability.texture or altMatches then
+                            found = true
+                            currentBuffIndex = buffIndex
+                            
+                            if ability.hasDuration then
+                                local duration = GetPlayerBuffTimeLeft(buffIndex)
+                                if duration and duration > 0 then
+                                    UpdateBuffEntry(ability, buffIndex, duration)
+                                end
+                            else
+                                UpdateBuffEntry(ability, buffIndex, 0)
+                            end
+                            break
                         end
                     end
                 end
 
-                -- If not found in active buffs, check all buffs
                 if not found then
                     for i = 0, 31 do
-                        local buffTexture = GetPlayerBuffTexture(i)
-                        if buffTexture then
+                        local buffIndex = GetPlayerBuff(i, "HARMFUL")
+                        if buffIndex >= 0 then
+                            local buffTexture = GetPlayerBuffTexture(buffIndex)
                             local altMatches = false
 
                             if ability.alternateTextures then
@@ -1009,46 +1102,41 @@ function EzTrack:UpdateAuras()
 
                             if buffTexture == ability.texture or altMatches then
                                 found = true
-                                currentBuffIndex = i
-                                local duration = GetPlayerBuffTimeLeft(i)
-
-                                -- Update buff tracking
-                                if duration and duration > 0 then
-                                    UpdateBuffEntry(ability, i, duration)
+                                currentBuffIndex = buffIndex
+                                
+                                if ability.hasDuration then
+                                    local duration = GetPlayerBuffTimeLeft(buffIndex)
+                                    if duration and duration > 0 then
+                                        UpdateBuffEntry(ability, buffIndex, duration)
+                                    end
+                                else
+                                    UpdateBuffEntry(ability, buffIndex, 0)
                                 end
                                 break
                             end
                         end
                     end
                 end
+            end
 
-                -- Update icon visibility
-                if found then
-                    icon:Show()
-                    icon.glow:SetAlpha(1)
-                    icon.texture:SetVertexColor(1, 1, 1) -- Reset color to normal
+            -- Update icon visibility
+            if found then
+                icon:Show()
+                icon.glow:SetAlpha(1)
+                icon.texture:SetVertexColor(1, 1, 1) -- Reset color to normal
+            else
+                -- If buff not found and was previously tracked, handle expiration
+                if activeBuffs[ability.name] then
+                    HandleBuffExpiration(ability.name)
                 else
-                    -- For non-proc, non-action-based abilities, show the icon but greyed out
-                    if not ability.isActionBased then
-                        -- If buff was previously tracked, handle expiration
-                        if activeBuffs[ability.name] then
-                            HandleBuffExpiration(ability.name)
-                        end
-
-                        icon:Show()
-                        icon.glow:SetAlpha(0) -- No glow when not active
-                        icon.activeTimer:SetText("")
-                        icon.texture:SetVertexColor(0.7, 0.7, 0.7) -- Grey out the icon
-                    else
-                        icon:Hide()
-                        icon.glow:SetAlpha(0)
-                        icon.activeTimer:SetText("")
-                        icon.texture:SetVertexColor(1, 1, 1) -- Reset color when hidden
-                    end
+                    icon.glow:SetAlpha(0)
                 end
             end
         end
     end
+    
+    -- Update active timers after processing all icons
+    self:UpdateActiveTimers()
 end
 
 -- Update cooldowns
@@ -1067,8 +1155,8 @@ function EzTrack:UpdateCooldowns()
                         if remaining > 0 then
                             if not icon.activeTimer:IsShown() then
                                 icon.cooldown.texture:Show()
-                                icon.cooldown.text:Show()
-                                icon.cooldown.text:SetText(FormatTimeText(remaining))
+                                icon.cooldownTimer:Show()
+                                icon.cooldownTimer:SetText(FormatTimeText(remaining))
 
                                 -- Update cooldown texture
                                 local progress = remaining / duration
@@ -1076,22 +1164,21 @@ function EzTrack:UpdateCooldowns()
                             end
                         else
                             icon.cooldown.texture:Hide()
-                            icon.cooldown.text:Hide()
+                            icon.cooldownTimer:Hide()
                         end
                     else
                         icon.cooldown.texture:Hide()
-                        icon.cooldown.text:Hide()
+                        icon.cooldownTimer:Hide()
                     end
                 else
-                    icon:Hide()
+                    -- Don't hide the icon, just clear cooldown display
                     icon.cooldown.texture:Hide()
-                    icon.cooldown.text:Hide()
+                    icon.cooldownTimer:Hide()
                 end
             else
-                -- Action not found on action bars
-                icon:Hide()
+                -- Action not found on action bars, but keep icon visible
                 icon.cooldown.texture:Hide()
-                icon.cooldown.text:Hide()
+                icon.cooldownTimer:Hide()
             end
         end
     end
@@ -1324,13 +1411,13 @@ local function CreateOptionsFrame()
             end
         )
 
-        -- Confirm Button
-        local confirmButton = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
-        confirmButton:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 20, 10)
-        confirmButton:SetWidth(120)
-        confirmButton:SetHeight(25)
-        confirmButton:SetText("Confirm")
-        confirmButton:SetScript(
+        -- Apply Button
+        local applyButton = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+        applyButton:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 20, 10)
+        applyButton:SetWidth(120)
+        applyButton:SetHeight(25)
+        applyButton:SetText("Apply")
+        applyButton:SetScript(
             "OnClick",
             function()
                 -- Apply pending changes
