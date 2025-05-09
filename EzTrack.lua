@@ -134,7 +134,7 @@ local function UpdateBuffEntry(ability, buffIndex, duration)
         index = buffIndex,
         duration = duration,
         startTime = currentTime,
-        expirationTime = currentTime + duration,
+        expirationTime = duration > 0 and (currentTime + duration) or nil, -- Set to nil for zero-duration buffs
         ability = ability
     }
 end
@@ -510,7 +510,8 @@ local classAbilities = {
             texture = "Interface\\Icons\\Spell_Holy_CrusaderStrike",
             icon = "Interface\\Icons\\Spell_Holy_CrusaderStrike",
             isProc = false,
-            hasDuration = false
+            hasDuration = false,
+            stacks = true
         },
         {
             name = "Wrath of Cenarius",
@@ -525,7 +526,8 @@ local classAbilities = {
             texture = "Interface\\Icons\\Spell_Holy_BlessingOfProtection",
             icon = "Interface\\Icons\\Spell_Holy_BlessingOfProtection",
             isProc = false,
-            hasDuration = true
+            hasDuration = true,
+            stacks = true
         }
     }
 }
@@ -882,7 +884,14 @@ updateFrame:SetScript(
         if gt >= st then
             this.startTime = GetTime()
             if EzTrack.isInitialized then
+                -- Check for expired buffs
+                for buffName, buffData in pairs(activeBuffs) do
+                    if buffData.expirationTime and GetTime() > buffData.expirationTime then
+                        HandleBuffExpiration(buffName)
+                    end
+                end
                 EzTrack:UpdateAuras()
+                auraFrame:CheckProcs()
                 EzTrack:UpdateCooldowns()
             end
         end
@@ -942,12 +951,19 @@ function EzTrack:CreateAbilityIcon(ability, index)
     activeTimer:SetText("")
     activeTimer:SetTextColor(1, 0.84, 0) -- Gold color for active timers
 
+    -- Create stack counter text
+    local stackCounter = icon:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+    stackCounter:SetPoint("TOPRIGHT", icon, "TOPRIGHT", 2, -2)
+    stackCounter:SetText("")
+    stackCounter:SetTextColor(1, 0, 1)
+
     icon.texture = texture
     icon.cooldown = cooldown
     icon.glow = glow
     icon.cooldownTimer = cooldownTimer
     icon.activeTimer = activeTimer
     icon.activeTimerFrame = activeTimerFrame
+    icon.stackCounter = stackCounter
     icon.ability = ability
 
     cooldown.texture = cooldownTexture
@@ -1001,6 +1017,28 @@ function EzTrack:SetupUI()
     self:SetHeight(totalHeight)
 end
 
+-- Update stack counter display
+function EzTrack:UpdateStackCounter(icon, ability, buffIndex)
+    if not ability.stacks then
+        icon.stackCounter:SetText("")
+        icon.stackCounter:Hide()
+        return
+    end
+
+    local stacks = GetPlayerBuffApplications(buffIndex, "HELPFUL")
+    if stacks < 0 then
+        stacks = GetPlayerBuffApplications(buffIndex, "HARMFUL")
+    end
+
+    if stacks > 0 then
+        icon.stackCounter:SetText(stacks)
+        icon.stackCounter:Show()
+    else
+        icon.stackCounter:SetText("")
+        icon.stackCounter:Hide()
+    end
+end
+
 -- Update active timers
 function EzTrack:UpdateActiveTimers()
     for _, icon in ipairs(self.icons) do
@@ -1009,24 +1047,44 @@ function EzTrack:UpdateActiveTimers()
         if ability.hasDuration then
             -- Check if we have an active buff for this ability
             if activeBuffs[ability.name] then
-                local remaining = activeBuffs[ability.name].expirationTime - GetTime()
-                if remaining > 0 then
+                local buffData = activeBuffs[ability.name]
+                if buffData.expirationTime then
+                    local remaining = buffData.expirationTime - GetTime()
+                    if remaining > 0 then
+                        icon.cooldownTimer:Hide()
+                        icon.cooldown.texture:Hide()
+                        icon.activeTimer:SetText(FormatTimeText(remaining))
+                        icon.activeTimer:Show()
+
+                        -- Update stack counter
+                        self:UpdateStackCounter(icon, ability, buffData.index)
+                    else
+                        icon.activeTimer:SetText("")
+                        icon.activeTimer:Hide()
+                        icon.stackCounter:SetText("")
+                        icon.stackCounter:Hide()
+                    end
+                else
                     icon.cooldownTimer:Hide()
                     icon.cooldown.texture:Hide()
-                    icon.activeTimer:SetText(FormatTimeText(remaining))
-                    icon.activeTimer:Show()
-                else
                     icon.activeTimer:SetText("")
                     icon.activeTimer:Hide()
+                    
+                    -- Update stack counter
+                    self:UpdateStackCounter(icon, ability, buffData.index)
                 end
             else
                 icon.activeTimer:SetText("")
                 icon.activeTimer:Hide()
+                icon.stackCounter:SetText("")
+                icon.stackCounter:Hide()
             end
         else
             -- For abilities without duration, ensure active timer is hidden
             icon.activeTimer:SetText("")
             icon.activeTimer:Hide()
+            icon.stackCounter:SetText("")
+            icon.stackCounter:Hide()
         end
     end
 end
