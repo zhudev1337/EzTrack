@@ -2,4 +2,4 @@ Twow addon to track procs and self buffs
 
 type ```/eztrack``` for options
 
-![eztrack](https://github.com/user-attachments/assets/bdd5e1aa-80d6-48f5-8167-87e96c421e78)
+![eztrack_ex](https://github.com/user-attachments/assets/04c9b8b8-3329-4dee-a71b-c226cca8ad11)
