@@ -534,12 +534,27 @@ local classAbilities = {
     },
     PALADIN = {
         {
+            name = "Holy Might",
+            texture = "Interface\\Icons\\Spell_Holy_HolyNova",
+            icon = "Interface\\Icons\\Spell_Holy_HolyNova",
+            isProc = true,
+            hasDuration = true
+        },
+        {
             name = "Crusader Strike",
             texture = "Interface\\Icons\\Spell_Holy_CrusaderStrike",
             icon = "Interface\\Icons\\Spell_Holy_CrusaderStrike",
             isProc = false,
             hasDuration = true,
             alternateTextures = {"Interface\\Icons\\Spell_Holy_HolySmite"},
+            stacks = true
+        },
+        {
+            name = "Vengeance",
+            texture = "Interface\\Icons\\Ability_Racial_Avatar",
+            icon = "Interface\\Icons\\Ability_Racial_Avatar",
+            isProc = true,
+            hasDuration = true,
             stacks = true
         },
         {
@@ -566,21 +581,6 @@ local classAbilities = {
             isProc = true,
             hasDuration = true,
             isItemBased = true
-        },
-        {
-            name = "Vengeance",
-            texture = "Interface\\Icons\\Ability_Racial_Avatar",
-            icon = "Interface\\Icons\\Ability_Racial_Avatar",
-            isProc = true,
-            hasDuration = true,
-            stacks = true
-        },
-        {
-            name = "Holy Might",
-            texture = "Interface\\Icons\\Spell_Holy_HolyNova",
-            icon = "Interface\\Icons\\Spell_Holy_HolyNova",
-            isProc = true,
-            hasDuration = true
         },
         {
             name = "Enlightened",
