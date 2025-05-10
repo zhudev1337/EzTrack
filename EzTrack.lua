@@ -117,13 +117,15 @@ local function HandleBuffExpiration(buffName)
             icon.activeTimer:Hide()
             EzTrack:UpdateCooldowns()
             icon.glow:SetAlpha(0)
+            -- Reset to default texture when buff expires
+            icon.texture:SetTexture(icon.ability.texture)
             break
         end
     end
 end
 
 -- Update or create buff entry
-local function UpdateBuffEntry(ability, buffIndex, duration)
+local function UpdateBuffEntry(ability, buffIndex, duration, matchedTexture)
     local currentTime = GetTime()
     -- If buff already exists, log its current state
     if activeBuffs[ability.name] then
@@ -134,8 +136,9 @@ local function UpdateBuffEntry(ability, buffIndex, duration)
         index = buffIndex,
         duration = duration,
         startTime = currentTime,
-        expirationTime = duration > 0 and (currentTime + duration) or nil, -- Set to nil for zero-duration buffs
-        ability = ability
+        expirationTime = duration > 0 and (currentTime + duration) or nil,
+        ability = ability,
+        matchedTexture = matchedTexture or ability.texture
     }
 end
 
@@ -187,7 +190,7 @@ function auraFrame:CheckProcs()
                             if duration and duration > 0 then
                                 found = true
                                 -- Update buff tracking with current duration
-                                UpdateBuffEntry(ability, buffIndex, duration)
+                                UpdateBuffEntry(ability, buffIndex, duration, buffTexture)
                             else
                                 -- Buff exists but has expired, handle expiration
                                 HandleBuffExpiration(ability.name)
@@ -196,7 +199,7 @@ function auraFrame:CheckProcs()
                             -- For procs without duration, just check if buff exists
                             found = true
                             -- Update buff tracking without duration
-                            UpdateBuffEntry(ability, buffIndex, 0)
+                            UpdateBuffEntry(ability, buffIndex, 0, buffTexture)
                         end
                     end
                 end
@@ -223,14 +226,15 @@ function auraFrame:CheckProcs()
                         if buffTexture == ability.texture or altMatches then
                             found = true
                             currentBuffIndex = buffIndex
+                            local matchedTexture = buffTexture
 
                             if ability.hasDuration then
                                 local duration = GetPlayerBuffTimeLeft(buffIndex)
                                 if duration and duration > 0 then
-                                    UpdateBuffEntry(ability, buffIndex, duration)
+                                    UpdateBuffEntry(ability, buffIndex, duration, matchedTexture)
                                 end
                             else
-                                UpdateBuffEntry(ability, buffIndex, 0)
+                                UpdateBuffEntry(ability, buffIndex, 0, matchedTexture)
                             end
                             break
                         end
@@ -257,14 +261,15 @@ function auraFrame:CheckProcs()
                             if buffTexture == ability.texture or altMatches then
                                 found = true
                                 currentBuffIndex = buffIndex
+                                local matchedTexture = buffTexture
 
                                 if ability.hasDuration then
                                     local duration = GetPlayerBuffTimeLeft(buffIndex)
                                     if duration and duration > 0 then
-                                        UpdateBuffEntry(ability, buffIndex, duration)
+                                        UpdateBuffEntry(ability, buffIndex, duration, matchedTexture)
                                     end
                                 else
-                                    UpdateBuffEntry(ability, buffIndex, 0)
+                                    UpdateBuffEntry(ability, buffIndex, 0, matchedTexture)
                                 end
                                 break
                             end
@@ -277,6 +282,13 @@ function auraFrame:CheckProcs()
             if found then
                 icon:Show()
                 icon.glow:SetAlpha(1)
+                -- Update the icon texture to match the active buff
+                if activeBuffs[ability.name] and activeBuffs[ability.name].matchedTexture then
+                    icon.texture:SetTexture(activeBuffs[ability.name].matchedTexture)
+                else
+                    icon.texture:SetTexture(ability.texture)
+                end
+                icon.texture:SetVertexColor(1, 1, 1)
             else
                 -- If buff not found and was previously tracked, handle expiration
                 if activeBuffs[ability.name] then
@@ -436,20 +448,29 @@ local classAbilities = {
             hasDuration = true
         },
         {
-            name = "Berserking",
-            texture = "Interface\\Icons\\Racial_Troll_Berserk",
-            icon = "Interface\\Icons\\Racial_Troll_Berserk",
-            isProc = false,
-            hasDuration = true,
-            race = "Troll"
-        },
-        {
             name = "Mind Quickening",
             texture = "Interface\\Icons\\Spell_Nature_WispHeal",
             icon = "Interface\\Icons\\Spell_Nature_WispHeal",
             isProc = false,
             hasDuration = true,
             isItemBased = true
+        },
+        {
+            name = "Spell Blasting",
+            texture = "Interface\\Icons\\Spell_Lightning_LightningBolt01",
+            icon = "Interface\\Icons\\Spell_Lightning_LightningBolt01",
+            isProc = true,
+            hasDuration = true,
+            isItemBased = true,
+            alternateTextures = {"Interface\\Icons\\INV_Jewelry_Ring_40"}
+        },
+        {
+            name = "Berserking",
+            texture = "Interface\\Icons\\Racial_Troll_Berserk",
+            icon = "Interface\\Icons\\Racial_Troll_Berserk",
+            isProc = false,
+            hasDuration = true,
+            race = "Troll"
         },
         {
             name = "The Restrained Essence of Sapphiron",
@@ -515,11 +536,12 @@ local classAbilities = {
         },
         {
             name = "Spell Blasting",
-            texture = "Interface\\Icons\\INV_Jewelry_Ring_40",
-            icon = "Interface\\Icons\\INV_Jewelry_Ring_40",
+            texture = "Interface\\Icons\\Spell_Lightning_LightningBolt01",
+            icon = "Interface\\Icons\\Spell_Lightning_LightningBolt01",
             isProc = true,
             hasDuration = true,
-            isItemBased = true
+            isItemBased = true,
+            alternateTextures = {"Interface\\Icons\\INV_Jewelry_Ring_40"}
         },
         {
             name = "Holy Shield",
@@ -842,7 +864,7 @@ EzTrack:SetScript(
                             if buffTexture == ability.texture or altMatches then
                                 local duration = GetPlayerBuffTimeLeft(buffIndex)
                                 if duration and duration > 0 then
-                                    UpdateBuffEntry(ability, buffIndex, duration)
+                                    UpdateBuffEntry(ability, buffIndex, duration, buffTexture)
                                 end
                                 break
                             end
@@ -1120,13 +1142,13 @@ function EzTrack:UpdateAuras()
                             local duration = GetPlayerBuffTimeLeft(buffIndex)
                             if duration and duration > 0 then
                                 found = true
-                                UpdateBuffEntry(ability, buffIndex, duration)
+                                UpdateBuffEntry(ability, buffIndex, duration, buffTexture)
                             else
                                 HandleBuffExpiration(ability.name)
                             end
                         else
                             found = true
-                            UpdateBuffEntry(ability, buffIndex, 0)
+                            UpdateBuffEntry(ability, buffIndex, 0, buffTexture)
                         end
                     end
                 end
@@ -1152,14 +1174,15 @@ function EzTrack:UpdateAuras()
                         if buffTexture == ability.texture or altMatches then
                             found = true
                             currentBuffIndex = buffIndex
+                            local matchedTexture = buffTexture
 
                             if ability.hasDuration then
                                 local duration = GetPlayerBuffTimeLeft(buffIndex)
                                 if duration and duration > 0 then
-                                    UpdateBuffEntry(ability, buffIndex, duration)
+                                    UpdateBuffEntry(ability, buffIndex, duration, matchedTexture)
                                 end
                             else
-                                UpdateBuffEntry(ability, buffIndex, 0)
+                                UpdateBuffEntry(ability, buffIndex, 0, matchedTexture)
                             end
                             break
                         end
@@ -1185,14 +1208,15 @@ function EzTrack:UpdateAuras()
                             if buffTexture == ability.texture or altMatches then
                                 found = true
                                 currentBuffIndex = buffIndex
+                                local matchedTexture = buffTexture
 
                                 if ability.hasDuration then
                                     local duration = GetPlayerBuffTimeLeft(buffIndex)
                                     if duration and duration > 0 then
-                                        UpdateBuffEntry(ability, buffIndex, duration)
+                                        UpdateBuffEntry(ability, buffIndex, duration, matchedTexture)
                                     end
                                 else
-                                    UpdateBuffEntry(ability, buffIndex, 0)
+                                    UpdateBuffEntry(ability, buffIndex, 0, matchedTexture)
                                 end
                                 break
                             end
@@ -1205,7 +1229,13 @@ function EzTrack:UpdateAuras()
             if found then
                 icon:Show()
                 icon.glow:SetAlpha(1)
-                icon.texture:SetVertexColor(1, 1, 1) -- Reset color to normal
+                -- Update the icon texture to match the active buff
+                if activeBuffs[ability.name] and activeBuffs[ability.name].matchedTexture then
+                    icon.texture:SetTexture(activeBuffs[ability.name].matchedTexture)
+                else
+                    icon.texture:SetTexture(ability.texture)
+                end
+                icon.texture:SetVertexColor(1, 1, 1)
             else
                 -- If buff not found and was previously tracked, handle expiration
                 if activeBuffs[ability.name] then
