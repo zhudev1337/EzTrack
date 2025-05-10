@@ -1309,7 +1309,7 @@ function EzTrack:UpdateAuras()
                 end
             end
 
-            -- Update icon visibility
+            -- Update icon visibility and appearance
             if found then
                 icon:Show()
                 icon.glow:SetAlpha(1)
@@ -1325,7 +1325,14 @@ function EzTrack:UpdateAuras()
                 if activeBuffs[ability.name] then
                     HandleBuffExpiration(ability.name)
                 else
-                    icon.glow:SetAlpha(0)
+                    -- For non-proc, non-action-based abilities, show greyed out when not active
+                    if not ability.isProc and not ability.isActionBased then
+                        icon:Show()
+                        icon.glow:SetAlpha(0)
+                        icon.texture:SetVertexColor(0.5, 0.5, 0.5)
+                    else
+                        icon.glow:SetAlpha(0)
+                    end
                 end
             end
         end
