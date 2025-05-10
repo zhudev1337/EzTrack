@@ -479,6 +479,13 @@ local classAbilities = {
             isProc = false,
             hasDuration = true,
             isItemBased = true
+        },
+        {
+            name = "Enlightened",
+            texture = "Interface\\Icons\\Spell_Holy_PowerInfusion",
+            icon = "Interface\\Icons\\Spell_Holy_PowerInfusion",
+            isProc = false,
+            hasDuration = true
         }
     },
     ROGUE = {
@@ -531,7 +538,8 @@ local classAbilities = {
             texture = "Interface\\Icons\\Spell_Holy_CrusaderStrike",
             icon = "Interface\\Icons\\Spell_Holy_CrusaderStrike",
             isProc = false,
-            hasDuration = false,
+            hasDuration = true,
+            alternateTextures = {"Interface\\Icons\\Spell_Holy_HolySmite"},
             stacks = true
         },
         {
@@ -558,6 +566,73 @@ local classAbilities = {
             isProc = true,
             hasDuration = true,
             isItemBased = true
+        },
+        {
+            name = "Vengeance",
+            texture = "Interface\\Icons\\Ability_Racial_Avatar",
+            icon = "Interface\\Icons\\Ability_Racial_Avatar",
+            isProc = true,
+            hasDuration = true
+        },
+        {
+            name = "Holy Might",
+            texture = "Interface\\Icons\\Spell_Holy_HolyNova",
+            icon = "Interface\\Icons\\Spell_Holy_HolyNova",
+            isProc = true,
+            hasDuration = true
+        },
+        {
+            name = "Enlightened",
+            texture = "Interface\\Icons\\Spell_Holy_PowerInfusion",
+            icon = "Interface\\Icons\\Spell_Holy_PowerInfusion",
+            isProc = false,
+            hasDuration = true
+        }
+    },
+    PRIEST = {
+        {
+            name = "Chastise Haste",
+            texture = "Interface\\Icons\\Spell_Nature_Invisibilty",
+            icon = "Interface\\Icons\\Spell_Nature_Invisibilty",
+            isProc = true,
+            hasDuration = true
+        },
+        {
+            name = "Purifying Flames",
+            texture = "Interface\\Icons\\Spell_Holy_SearingLight",
+            icon = "Interface\\Icons\\Spell_Holy_SearingLight",
+            isProc = true,
+            hasDuration = true
+        },
+        {
+            name = "Enlightened",
+            texture = "Interface\\Icons\\Spell_Holy_PowerInfusion",
+            icon = "Interface\\Icons\\Spell_Holy_PowerInfusion",
+            isProc = false,
+            isActionBased = true,
+            hasDuration = true
+        },
+        {
+            name = "Sun's Embrace",
+            texture = "Interface\\Icons\\Spell_Holy_HolyProtection",
+            icon = "Interface\\Icons\\Spell_Holy_HolyProtection",
+            isProc = false,
+            hasDuration = true,
+            race = "High Elf"
+        },
+        {
+            name = "Searing Light",
+            texture = "Interface\\Icons\\Spell_Holy_SearingLightPriest",
+            icon = "Interface\\Icons\\Spell_Holy_SearingLightPriest",
+            isProc = true,
+            hasDuration = true
+        },
+        {
+            name = "Resurgent Shield",
+            texture = "Interface\\Icons\\Ability_Paladin_InfusionOfLight",
+            icon = "Interface\\Icons\\Ability_Paladin_InfusionOfLight",
+            isProc = true,
+            hasDuration = true
         }
     }
 }
