@@ -572,7 +572,8 @@ local classAbilities = {
             texture = "Interface\\Icons\\Ability_Racial_Avatar",
             icon = "Interface\\Icons\\Ability_Racial_Avatar",
             isProc = true,
-            hasDuration = true
+            hasDuration = true,
+            stacks = true
         },
         {
             name = "Holy Might",
