@@ -550,6 +550,14 @@ local classAbilities = {
             isProc = false,
             hasDuration = true,
             stacks = true
+        },
+        {
+            name = "Focus",
+            texture = "Interface\\Icons\\Spell_Holy_SearingLight",
+            icon = "Interface\\Icons\\Spell_Holy_SearingLight",
+            isProc = true,
+            hasDuration = true,
+            isItemBased = true
         }
     }
 }
