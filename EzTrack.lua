@@ -456,6 +456,14 @@ local classAbilities = {
             isItemBased = true
         },
         {
+            name = "Ephemeral Power",
+            texture = "Interface\\Icons\\Spell_Holy_MindVision",
+            icon = "Interface\\Icons\\Spell_Holy_MindVision",
+            isProc = false,
+            hasDuration = true,
+            isItemBased = true
+        },
+        {
             name = "Spell Blasting",
             texture = "Interface\\Icons\\Spell_Lightning_LightningBolt01",
             icon = "Interface\\Icons\\Spell_Lightning_LightningBolt01",
