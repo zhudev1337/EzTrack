@@ -492,7 +492,7 @@ local classAbilities = {
             name = "Enlightened",
             texture = "Interface\\Icons\\Spell_Holy_PowerInfusion",
             icon = "Interface\\Icons\\Spell_Holy_PowerInfusion",
-            isProc = false,
+            isProc = true,
             hasDuration = true
         }
     },
@@ -594,7 +594,7 @@ local classAbilities = {
             name = "Enlightened",
             texture = "Interface\\Icons\\Spell_Holy_PowerInfusion",
             icon = "Interface\\Icons\\Spell_Holy_PowerInfusion",
-            isProc = false,
+            isProc = true,
             hasDuration = true
         }
     },
@@ -617,8 +617,7 @@ local classAbilities = {
             name = "Enlightened",
             texture = "Interface\\Icons\\Spell_Holy_PowerInfusion",
             icon = "Interface\\Icons\\Spell_Holy_PowerInfusion",
-            isProc = false,
-            isActionBased = true,
+            isProc = true,
             hasDuration = true
         },
         {
