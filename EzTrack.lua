@@ -641,6 +641,15 @@ local classAbilities = {
             icon = "Interface\\Icons\\Ability_Paladin_InfusionOfLight",
             isProc = true,
             hasDuration = true
+        },
+        {
+            name = "Spell Blasting",
+            texture = "Interface\\Icons\\Spell_Lightning_LightningBolt01",
+            icon = "Interface\\Icons\\Spell_Lightning_LightningBolt01",
+            isProc = true,
+            hasDuration = true,
+            isItemBased = true,
+            alternateTextures = {"Interface\\Icons\\INV_Jewelry_Ring_40"}
         }
     }
 }
